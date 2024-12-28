@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %} Home Page {% endblock title %}
+
+{% block content %}
+<span class="message hide"><b> {{x.title}} </b> added to cart successfully!</span>
+<style>
+  .hide {
+    display: none;
+  }
+</style>
+
+<div class="container-fluid p-5 mb-3">
+  <div class="row d-flex justify-content-center">
+    {% for x in products %}
+      <div class="card m-3 p-3 bg-light border-5 border-secondary rounded-5" style="width: 18rem;" title="{{ x.title }}">
+        <a href="{% url 'view_product' x.id %}" class="text-decoration-none text-dark">
+          <img src="{{x.image.url}}" class="card-img-top border-0 rounded-5" alt="Default Image" width="70" style="box-shadow: 0px 0px 10px white !important;">
+          <div class="card-body">
+            <h5 class="card-title">{{ x.title  |truncatechars:17 }}</h5>
+            <p class="bg-warning text-dark px-3 rounded-0 d-inline">Price: {{ x.retail_price }}$</p><br>
+            <p class="bg-dark text-light px-2 rounded-1 d-inline">Size: {{ x.size }}</p>
+          </div>
+        </a>
+        <button class="btn btn-dark mb-3 rounded-0 w-100 add-cart" value="{{ x.id }}" onclick="showMessage()">Add to Cart</button>
+      </div>
+    {% empty %}
+      <p>No products available!</p>
+    {% endfor %}
+  </div>
+</div>
+
+<span hidden> 
+  {% block cartCount %} {{ cart_count }} {% endblock cartCount %}
+</span>
+
+<script>
+  function showMessage() {
+    const message = document.querySelector('.message');
+    if (message.classList.contains("hide")) {
+      message.classList.remove("hide");
+      setTimeout(() => {
+        message.classList.add('hide');
+      }, 1000);
+    } else {
+      message.classList.add("hide");
+    }
+  }
+
+  // Add event listener for all buttons
+  $(document).on('click', '.add-cart', function (e) {
+    e.preventDefault();
+
+    // Get the product ID from the clicked button's value
+    const productId = this.value;
+    // Perform the AJAX POST request
+    $.ajax({
+      type: 'POST',
+      url: "{% url 'cart_add' %}",
+      data: {
+        product_id: productId,
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        action: 'post',
+      },
+      success: function (json) {
+        console.log(json);
+        showMessage(document.querySelector(`.add-cart[value="${productId}"]`));
+         // Show success message
+      },
+      error: function (xhr, errmsg, err) {
+        console.error(errmsg);
+      },
+    });
+  });
+</script>
+
+{% endblock content %}
